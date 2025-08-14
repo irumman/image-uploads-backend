@@ -1,0 +1,25 @@
+from pydantic import BaseModel, EmailStr, ConfigDict
+
+
+class EmailRegistrationInput(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+class EmailRegistrationResponse(BaseModel):
+    name: str
+    email: EmailStr
+    message: str
+    model_config = ConfigDict(from_attributes=True)
+
+class VerifyEmailResponse(BaseModel):
+    message: str
+
+class LoginEmailInput(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginEmailResponse(BaseModel):
+    access_token: str
+    token_type: str
+    message: str
