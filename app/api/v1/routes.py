@@ -1,10 +1,18 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks, Query, Depends
-from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadInputRequest
-from app.services.image_uploads.uploads import upload_service
+
+from app.db.crud.user_sessions import UserSessionCrud
+from app.db.pg_engine import get_db_session
+from app.services.auth.dependencies import get_current_session
 from app.services.auth.email_password.email_registration import email_registration
 from app.services.auth.email_password.login_user_pass import LoginUserPass
-from app.services.auth.email_password.schemas import (EmailRegistrationInput, EmailRegistrationResponse,
-                                                      LoginEmailInput, LoginEmailResponse)
+from app.services.auth.email_password.schemas import (
+    EmailRegistrationInput,
+    EmailRegistrationResponse,
+    LoginEmailInput,
+    LoginEmailResponse,
+)
+from app.services.image_uploads.schemas import ImageUploadInputRequest, ImageUploadResponse
+from app.services.image_uploads.uploads import upload_service
 
 router = APIRouter()
 
@@ -43,6 +51,14 @@ async def login(body: LoginEmailInput, login_user_pass: LoginUserPass = Depends(
 ):
     resp = await login_user_pass.login_with_password(body.email, body.password)
     return resp
+
+
+@router.post("/logout", status_code=204)
+async def logout(
+    user_session=Depends(get_current_session), session=Depends(get_db_session)
+):
+    await UserSessionCrud(session).revoke_session(user_session.id)
+    return {"message": "Logged out"}
 
 
 @router.get("/")
