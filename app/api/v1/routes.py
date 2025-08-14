@@ -8,7 +8,11 @@ from app.services.auth.email_password.schemas import (EmailRegistrationInput, Em
 
 router = APIRouter()
 
-@router.post("/upload", response_model=ImageUploadResponse)
+# The upload endpoint previously omitted a trailing slash.  FastAPI interprets
+# this strictly and would issue a ``307 Temporary Redirect`` when clients send a
+# path ending with ``/`` (as the tests do).  Declaring the route with the
+# trailing slash avoids the redirect and returns the intended status codes.
+@router.post("/upload/", response_model=ImageUploadResponse)
 async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
