@@ -1,11 +1,16 @@
-from fastapi import HTTPException, Depends
+from datetime import datetime, timedelta, timezone
+import hashlib
+import secrets
+
+from fastapi import Depends, HTTPException
 from pydantic import EmailStr
 from starlette import status
 
-from app.services.auth.email_password.jwt_helper import jwt_helper
 from app.db.crud.app_users import AppUserCrud
+from app.db.crud.user_sessions import UserSessionCrud
 from app.db.pg_engine import get_db_session
 from app.services.auth.email_password.schemas import LoginEmailResponse
+from app.services.auth.email_password.jwt_helper import jwt_helper
 
 
 class LoginUserPass:
@@ -24,9 +29,13 @@ class LoginUserPass:
         if user.password is None or not jwt_helper.verify_password(password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-        #TODO: add session info
-        # Issue JWT with user id as sub
-        sub = {"id": user.id}
-        token =  jwt_helper.create_access_token(sub=sub, secret=jwt_helper.secret_key, expires_minutes=1400)
-        resp = LoginEmailResponse(access_token=token, token_type="bearer", message="Login successful")
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=1400)
+        await UserSessionCrud(self.session).create_session(
+            user_id=user.id, token_hash=token_hash, expires_at=expires_at
+        )
+        resp = LoginEmailResponse(
+            access_token=raw_token, token_type="bearer", message="Login successful"
+        )
         return resp
