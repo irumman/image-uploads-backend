@@ -31,7 +31,7 @@ class LoginUserPass:
         token = jwt_helper.create_access_token(
             sub=sub,
             secret=jwt_helper.secret_key,
-            expires_minutes=settings.SESSION_TTL_MINUTES,
+            expires_minutes=settings.session_ttl_minutes,
         )
         resp = LoginEmailResponse(access_token=token, token_type="bearer", message="Login successful")
         return resp
