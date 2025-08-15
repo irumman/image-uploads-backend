@@ -3,6 +3,7 @@ from pydantic import EmailStr
 from starlette import status
 
 from app.services.auth.email_password.jwt_helper import jwt_helper
+from app.configs.settings import settings
 from app.db.crud.app_users import AppUserCrud
 from app.db.pg_engine import get_db_session
 from app.services.auth.email_password.schemas import LoginEmailResponse
@@ -27,6 +28,10 @@ class LoginUserPass:
         #TODO: add session info
         # Issue JWT with user id as sub
         sub = {"id": user.id}
-        token =  jwt_helper.create_access_token(sub=sub, secret=jwt_helper.secret_key, expires_minutes=1400)
+        token = jwt_helper.create_access_token(
+            sub=sub,
+            secret=jwt_helper.secret_key,
+            expires_minutes=settings.SESSION_TTL_MINUTES,
+        )
         resp = LoginEmailResponse(access_token=token, token_type="bearer", message="Login successful")
         return resp

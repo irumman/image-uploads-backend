@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     """
     env: Literal["dev", "staging", "production"] = "dev"
     debug: bool = True
+    SESSION_TTL_MINUTES: int = 1400
 
     azure_vision_key: str = 'azure_vision_key'
     azure_vision_endpoint: str = 'azure_vision_endpoint'
@@ -67,3 +68,4 @@ class Settings(BaseSettings):
 
 # Singleton-style settings object
 settings = Settings()
+
