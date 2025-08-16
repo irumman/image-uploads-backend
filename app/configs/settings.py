@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     debug: bool = True
     session_ttl_minutes: int = 15
 
+
     azure_vision_key: str = 'azure_vision_key'
     azure_vision_endpoint: str = 'azure_vision_endpoint'
 
@@ -49,10 +50,6 @@ class Settings(BaseSettings):
     mail_verify_base_url: str = 'mail-verify-base-url'
     mail_username: str = "mail_username"
     mail_password: SecretStr = "mail_password"
-    # ``EmailStr`` requires a valid e‑mail address.  The previous placeholder
-    # lacked an ``@`` and failed validation which also stopped the application
-    # from starting.  A syntactically valid example address avoids that issue
-    # while remaining obviously a placeholder.
     mail_from: EmailStr = "noreply@example.com"
     mail_server: str = "mail_server"
     mail_port: int = 587
@@ -61,9 +58,12 @@ class Settings(BaseSettings):
     use_credentials: bool = True
     validate_certs: bool = True
 
-    mail_token_secret_key: str = "my-personal-email"
+    mail_token_secret_key: str = "mail_token_secret_key"
     mail_token_algorithm: str = "HS256"
     mail_token_expire_hours: int = 24
+    access_token_secret_key : str = "access_token_secret_key"
+    refresh_token_pepper: str = "refresh_token_pepper"
+    refresh_token_bytes: int = 48
 
 
 # Singleton-style settings object

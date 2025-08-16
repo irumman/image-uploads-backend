@@ -1,4 +1,6 @@
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks, Query, Depends
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Depends, Request
+
+from app.db.pg_engine import get_db_session
 from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadInputRequest
 from app.services.image_uploads.uploads import upload_service
 from app.services.auth.email_password.email_registration import email_registration
@@ -39,9 +41,9 @@ async def register(token: str = Query(..., description="JWT sent in the verifica
     return response
 
 @router.post("/login",response_model=LoginEmailResponse, status_code=200)
-async def login(body: LoginEmailInput, login_user_pass: LoginUserPass = Depends()
-):
-    resp = await login_user_pass.login_with_password(body.email, body.password)
+async def login(body: LoginEmailInput, request: Request, db=Depends(get_db_session)):
+    login_user_pass: LoginUserPass = LoginUserPass(db,body.email, body.password)
+    resp = await login_user_pass.login_with_password(request=request)
     return resp
 
 
