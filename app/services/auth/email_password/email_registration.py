@@ -6,7 +6,7 @@ from app.db.pg_engine import sessionmanager
 from app.db.pg_dml import insert_record, upsert_record
 from app.db.models.app_users import AppUser
 from app.configs.email_configs import email_conf
-from app.services.auth.email_password.jwt_helper import jwt_helper
+from app.core.jwt_helper import jwt_helper
 from app.configs.settings import settings
 from app.db.crud.app_users import AppUserCrud
 

@@ -21,5 +21,6 @@ class LoginEmailInput(BaseModel):
 
 class LoginEmailResponse(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "Bearer"
     message: str
+    refresh_token: str | None = None

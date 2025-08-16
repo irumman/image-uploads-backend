@@ -1,37 +1,66 @@
-from fastapi import HTTPException, Depends
+# app/services/auth/email_password/service.py
+from typing import Literal, Optional
+from fastapi import HTTPException, Request
 from pydantic import EmailStr
 from starlette import status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.auth.email_password.jwt_helper import jwt_helper
+from app.core.jwt_helper import jwt_helper
 from app.configs.settings import settings
 from app.db.crud.app_users import AppUserCrud
-from app.db.pg_engine import get_db_session
+from app.db.models.app_users import AppUser
 from app.services.auth.email_password.schemas import LoginEmailResponse
+from app.db.crud.auth_sessions import AuthSessionCRUD
 
+REFRESH_COOKIE = "rt"
 
 class LoginUserPass:
+    """
+    Handles email+password login. Issues access+refresh token_utils and persists the refresh session.
+    NOTE: Do NOT use Depends(...) in __init__. Inject dependencies from the route/method call.
+    """
+    def __init__(self, db: AsyncSession, email: EmailStr, password: str):
+        self.db = db
+        self.email = email
+        self.password = password
+        self.refresh_days = 60
 
-    def __init__(self, session=Depends(get_db_session)):
-        self.session = session
-
-    async def login_with_password(self, email: EmailStr, password: str) -> LoginEmailResponse:
-        user = await AppUserCrud(self.session).get_active_user_by_email(email)
+    async def _user_password_validate(self) -> AppUser:
+        user = await AppUserCrud(self.db).get_active_user_by_email(self.email)
         if user is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
         if not user.is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
-
-        if user.password is None or not jwt_helper.verify_password(password, user.password):
+        if user.password is None or not jwt_helper.verify_password(self.password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        return user
 
-        #TODO: add session info
-        # Issue JWT with user id as sub
-        sub = {"id": user.id}
-        token = jwt_helper.create_access_token(
-            sub=sub,
-            secret=jwt_helper.secret_key,
+    async def login_with_password(self, request: Request) -> LoginEmailResponse:
+        user: AppUser = await self._user_password_validate()
+
+        # 2) Access token (short-lived)
+        access_token = jwt_helper.create_access_token(
+            sub=user.id,
+            secret=jwt_helper.access_secret_key if hasattr(jwt_helper, "access_secret_key") else jwt_helper.secret_key,
             expires_minutes=settings.session_ttl_minutes,
         )
-        resp = LoginEmailResponse(access_token=token, token_type="bearer", message="Login successful")
-        return resp
+
+        # 3) Refresh token (opaque) + persist session (hash only)
+        refresh_raw = jwt_helper.make_refresh_token()
+        session_crud = AuthSessionCRUD()
+        await session_crud.create(
+            self.db,
+            user_id=user.id,
+            refresh_token_raw=refresh_raw,
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            device_name=None,
+            days=self.refresh_days,
+        )
+
+        return LoginEmailResponse(
+            access_token=access_token,
+            refresh_token=refresh_raw,
+            message="Login successful",
+        )
+
