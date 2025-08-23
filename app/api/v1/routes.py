@@ -5,8 +5,15 @@ from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadI
 from app.services.image_uploads.uploads import upload_service
 from app.services.auth.email_password.email_registration import email_registration
 from app.services.auth.email_password.login_user_pass import LoginUserPass
-from app.services.auth.email_password.schemas import (EmailRegistrationInput, EmailRegistrationResponse,
-                                                      LoginEmailInput, LoginEmailResponse)
+from app.services.auth.email_password.logout import Logout
+from app.services.auth.email_password.schemas import (
+    EmailRegistrationInput,
+    EmailRegistrationResponse,
+    LoginEmailInput,
+    LoginEmailResponse,
+    LogoutInput,
+    LogoutResponse,
+)
 
 router = APIRouter()
 
@@ -47,6 +54,13 @@ async def login(body: LoginEmailInput, request: Request, db=Depends(get_db_sessi
     return resp
 
 
+@router.post("/logout", response_model=LogoutResponse, status_code=200)
+async def logout(body: LogoutInput, db=Depends(get_db_session)):
+    service = Logout(db, body.user_id, body.refresh_token)
+    return await service.logout()
+
+
 @router.get("/")
 async  def root():
     return {"message": "Hello World"}
+

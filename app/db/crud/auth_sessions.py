@@ -65,7 +65,7 @@ class AuthSessionCRUD:
             offset=None,
         )
         # additional constraints in Python
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         probe = self.token_utils.hash_refresh(refresh_token_raw)
 
         for r in rows:

@@ -24,3 +24,12 @@ class LoginEmailResponse(BaseModel):
     token_type: str = "Bearer"
     message: str
     refresh_token: str | None = None
+
+
+class LogoutInput(BaseModel):
+    user_id: int
+    refresh_token: str
+
+
+class LogoutResponse(BaseModel):
+    message: str
