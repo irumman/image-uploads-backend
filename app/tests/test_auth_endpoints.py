@@ -1,0 +1,105 @@
+import pytest
+from fastapi import FastAPI, HTTPException
+from httpx import AsyncClient, ASGITransport
+
+from app.services.auth.email_password.login_user_pass import LoginUserPass
+from app.services.auth.email_password.logout import Logout
+from app.services.auth.email_password.schemas import LoginEmailResponse, LogoutResponse
+from app.db.pg_engine import get_db_session
+
+
+@pytest.mark.asyncio
+async def test_login_success(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
+    async def fake_login(self, request):
+        return LoginEmailResponse(
+            access_token="token123",
+            refresh_token="refresh123",
+            message="Login successful",
+        )
+
+    monkeypatch.setattr(LoginUserPass, "login_with_password", fake_login)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/api/login",
+            json={"email": "user@example.com", "password": "secret"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "access_token": "token123",
+        "token_type": "Bearer",
+        "refresh_token": "refresh123",
+        "message": "Login successful",
+    }
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_login_invalid_credentials(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
+    async def fake_login(self, request):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    monkeypatch.setattr(LoginUserPass, "login_with_password", fake_login)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/api/login",
+            json={"email": "user@example.com", "password": "bad"},
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid credentials"
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_logout_success(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
+    async def fake_logout(self):
+        return LogoutResponse(message="Logout successful")
+
+    monkeypatch.setattr(Logout, "logout", fake_logout)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/api/logout",
+            json={"user_id": 1, "refresh_token": "token"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Logout successful"}
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_logout_invalid_session(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
+    async def fake_logout(self):
+        raise HTTPException(status_code=401, detail="Invalid session")
+
+    monkeypatch.setattr(Logout, "logout", fake_logout)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/api/logout",
+            json={"user_id": 1, "refresh_token": "bad"},
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid session"
+    app.dependency_overrides.clear()
