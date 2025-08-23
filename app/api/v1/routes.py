@@ -25,14 +25,12 @@ router = APIRouter()
 async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid upload metadata")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid upload metadata")
     upload_resp = await upload_service.upload_image(
         file,
         user_id=meta_obj.user_id,
-        chapter=meta_obj.chapter,
-        ayat_start=meta_obj.ayat_start,
-        ayat_end=meta_obj.ayat_end
+        meta_data=meta_obj.meta_data.model_dump(),
     )
     return upload_resp
 
