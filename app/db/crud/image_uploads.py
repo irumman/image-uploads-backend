@@ -18,6 +18,7 @@ class ImageUploadCRUD:
         chapter: int,
         ayat_start: int,
         ayat_end: int,
+        script_id: int | None = None,
         status: int = ProcessingStatus.UPLOADED,
         upload_timestamp: datetime | None = None,
     ) -> ImageUploads:
@@ -29,6 +30,7 @@ class ImageUploadCRUD:
             ayat_start=ayat_start,
             ayat_end=ayat_end,
             status=status,
+            script_id=script_id,
             upload_timestamp=upload_timestamp or datetime.now(timezone.utc),
         )
         return await insert_record(db, row)

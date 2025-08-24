@@ -18,6 +18,7 @@ class UploadService:
         chapter: int,
         ayat_start: int,
         ayat_end: int,
+        script_id: int
     ) -> ImageUploadResponse:
         """Upload an image and record its metadata."""
         file_content = await file.read()
@@ -36,6 +37,7 @@ class UploadService:
                     chapter=chapter,
                     ayat_start=ayat_start,
                     ayat_end=ayat_end,
+                    script_id=script_id,
                 )
                 return ImageUploadResponse(
                     file_path=file_url,

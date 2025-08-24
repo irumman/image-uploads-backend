@@ -5,6 +5,7 @@ class ImageUploadInputRequest(BaseModel):
     chapter: int
     ayat_start: int
     ayat_end: int
+    script_id: int
 
 
 class ImageUploadResponse(BaseModel):
