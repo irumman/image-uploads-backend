@@ -38,9 +38,9 @@ async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
     return upload_resp
 
 
-@router.get("/images/{script_id}/", response_model=list[UserImage])
-async def get_script_images(script_id: int):
-    images = await upload_service.get_script_images(script_id)
+@router.get("/images/{user_id}/", response_model=list[UserImage])
+async def get_user_images(user_id: int):
+    images = await upload_service.get_user_images(user_id)
     return images
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=201)

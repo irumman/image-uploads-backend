@@ -70,11 +70,11 @@ class UploadService:
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
-    async def get_script_images(self, script_id: int) -> list[UserImage]:
-        """Fetch uploaded images for a given script."""
+    async def get_user_images(self, user_id: int) -> list[UserImage]:
+        """Fetch uploaded images for a given user."""
         async with sessionmanager.session() as session:
             try:
-                records = await ImageUploadCrud(session).get_by_script(script_id)
+                records = await ImageUploadCrud(session).get_by_user(user_id)
                 return [
                     UserImage(
                         file_path=r.file_path,

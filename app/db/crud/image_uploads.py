@@ -12,7 +12,7 @@ class ImageUploadCrud:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_script(self, script_id: int) -> Sequence[ImageUploads]:
-        """Return all uploads associated with a ``script_id``."""
-        return await get_many(self.session, ImageUploads, filters={"script_id": script_id})
+    async def get_by_user(self, user_id: int) -> Sequence[ImageUploads]:
+        """Return all uploads associated with a ``user_id``."""
+        return await get_many(self.session, ImageUploads, filters={"user_id": user_id})
 
