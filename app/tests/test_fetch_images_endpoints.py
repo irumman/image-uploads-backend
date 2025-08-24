@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException
 from httpx import AsyncClient, ASGITransport
 
 from app.services.image_uploads.uploads import upload_service
+from app.db.crud.image_uploads import ImageUploadCrud
 
 
 @pytest.mark.asyncio
@@ -27,16 +28,16 @@ async def test_get_user_images_success(monkeypatch, app: FastAPI):
 
 
 @pytest.mark.asyncio
-async def test_get_user_images_failure(monkeypatch, app: FastAPI):
+async def test_get_user_images_not_found(monkeypatch, app: FastAPI):
     transport = ASGITransport(app=app)
 
-    async def broken_get_user_images(user_id: int):
-        raise HTTPException(status_code=404, detail="not found")
+    async def fake_get_by_user(self, user_id: int):
+        return []
 
-    monkeypatch.setattr(upload_service, "get_user_images", broken_get_user_images)
+    monkeypatch.setattr(ImageUploadCrud, "get_by_user", fake_get_by_user)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/api/images/123/")
 
     assert resp.status_code == 404
-    assert resp.json()["detail"] == "not found"
+    assert resp.json()["detail"] == "Images not found"

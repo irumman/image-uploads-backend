@@ -71,10 +71,16 @@ class UploadService:
                 raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
     async def get_user_images(self, user_id: int) -> list[UserImage]:
-        """Fetch uploaded images for a given user."""
+        """Fetch uploaded images for a given user.
+
+        Raises a 404 if the user has no associated image uploads."""
+
         async with sessionmanager.session() as session:
             try:
                 records = await ImageUploadCrud(session).get_by_user(user_id)
+                if not records:
+                    raise HTTPException(status_code=404, detail="Images not found")
+
                 return [
                     UserImage(
                         file_path=r.file_path,
@@ -85,6 +91,9 @@ class UploadService:
                     )
                     for r in records
                 ]
+            except HTTPException:
+                # Pass through HTTPExceptions such as the 404 above
+                raise
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Failed to fetch images: {str(e)}")
 
