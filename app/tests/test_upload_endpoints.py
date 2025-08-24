@@ -101,3 +101,19 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
     assert resp.status_code == 200
     assert resp.json() == fake_resp
 
+
+@pytest.mark.asyncio
+async def test_get_user_uploads_empty(monkeypatch, app: FastAPI):
+    transport = ASGITransport(app=app)
+
+    async def fake_get_user_uploads(user_id):
+        return []
+
+    monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/uploads/42")
+
+    assert resp.status_code == 200
+    assert resp.json() == []
+
