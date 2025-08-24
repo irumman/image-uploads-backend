@@ -62,3 +62,4 @@ async def test_get_user_uploads_empty(monkeypatch):
 
     records = await service.get_user_uploads(5)
     assert records == []
+    assert isinstance(records, list)

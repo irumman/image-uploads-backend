@@ -114,6 +114,8 @@ async def test_get_user_uploads_empty(monkeypatch, app: FastAPI):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/api/uploads/42")
 
+    data = resp.json()
     assert resp.status_code == 200
-    assert resp.json() == []
+    assert data == []
+    assert isinstance(data, list)
 

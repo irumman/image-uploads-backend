@@ -48,9 +48,18 @@ class UploadService:
                 raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
     async def get_user_uploads(self, user_id: int) -> list[ImageUploadRecord]:
-        """Return all uploads for a specific user."""
+        """Return all uploads for a specific user.
+
+        The mobile client expects a successful request to return JSON even when
+        no uploads exist.  Instead of raising ``HTTPException`` on an empty
+        result set, simply return an empty list so the response body is ``[]``.
+        """
         async with sessionmanager.session() as session:
             rows = await self.crud.get_by_user(session, user_id)
+
+        if not rows:
+            return []
+
         return [
             ImageUploadRecord(
                 file_path=row.file_path,
