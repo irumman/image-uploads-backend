@@ -15,3 +15,4 @@ class ImageUploads(Base):
     ayat_start: Mapped[int] = mapped_column(SmallInteger)
     ayat_end: Mapped[int] = mapped_column(SmallInteger)
     status: Mapped[int] = mapped_column(SmallInteger)
+    script_id: Mapped[int] = mapped_column(SmallInteger)

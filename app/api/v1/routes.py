@@ -32,7 +32,8 @@ async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
         user_id=meta_obj.user_id,
         chapter=meta_obj.chapter,
         ayat_start=meta_obj.ayat_start,
-        ayat_end=meta_obj.ayat_end
+        ayat_end=meta_obj.ayat_end,
+        script_id=meta_obj.script_id
     )
     return upload_resp
 
