@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Depends, Request
 
 from app.db.pg_engine import get_db_session
-from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadInputRequest
+from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadInputRequest, UserImage
 from app.services.image_uploads.uploads import upload_service
 from app.services.auth.email_password.email_registration import email_registration
 from app.services.auth.email_password.login_user_pass import LoginUserPass
@@ -30,11 +30,18 @@ async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
     upload_resp = await upload_service.upload_image(
         file,
         user_id=meta_obj.user_id,
+        script_id=meta_obj.script_id,
         chapter=meta_obj.chapter,
         ayat_start=meta_obj.ayat_start,
-        ayat_end=meta_obj.ayat_end
+        ayat_end=meta_obj.ayat_end,
     )
     return upload_resp
+
+
+@router.get("/images/{script_id}/", response_model=list[UserImage])
+async def get_script_images(script_id: int):
+    images = await upload_service.get_script_images(script_id)
+    return images
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=201)
 async def register(user_in: EmailRegistrationInput):

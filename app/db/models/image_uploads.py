@@ -9,6 +9,7 @@ class ImageUploads(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger)
+    script_id: Mapped[int] = mapped_column(BigInteger)
     file_path: Mapped[str] = mapped_column(String(255))
     upload_timestamp: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
     chapter: Mapped[int] = mapped_column(SmallInteger)

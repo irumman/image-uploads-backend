@@ -12,13 +12,13 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     transport = ASGITransport(app=app)
     # 1) arrange: fake upload_service.upload_image to return a known response
     fake_resp = {"file_path": "https://example.com/foo.jpg", "message": "Uploaded successfully"}
-    async def fake_upload_image(file, user_id, chapter, ayat_start, ayat_end):
+    async def fake_upload_image(file, user_id, script_id, chapter, ayat_start, ayat_end):
         return fake_resp
     monkeypatch.setattr(upload_service, "upload_image", fake_upload_image)
 
     # 2) prepare form-data: a small in-memory file + metadata JSON
     file_bytes = b"JPEGDATA"
-    metadata = {"user_id": 42, "chapter": 1, "ayat_start": 2, "ayat_end": 3}
+    metadata = {"user_id": 42, "script_id": 7, "chapter": 1, "ayat_start": 2, "ayat_end": 3}
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
@@ -53,7 +53,7 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
         raise HTTPException(status_code=502, detail="upstream failed")
     monkeypatch.setattr(upload_service, "upload_image", broken_upload)
 
-    metadata = {"user_id": 1, "chapter": 1, "ayat_start": 1, "ayat_end": 1}
+    metadata = {"user_id": 1, "script_id": 7, "chapter": 1, "ayat_start": 1, "ayat_end": 1}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/upload/",
