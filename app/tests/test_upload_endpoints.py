@@ -1,9 +1,9 @@
 import json
-import pytest
 import io
+import pytest
 from fastapi import FastAPI, HTTPException
 from httpx import AsyncClient, ASGITransport
-from app.api.v1.routes import router
+
 from app.services.image_uploads.uploads import upload_service
 
 
@@ -12,13 +12,15 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     transport = ASGITransport(app=app)
     # 1) arrange: fake upload_service.upload_image to return a known response
     fake_resp = {"file_path": "https://example.com/foo.jpg", "message": "Uploaded successfully"}
-    async def fake_upload_image(file, user_id, chapter, ayat_start, ayat_end):
+
+    async def fake_upload_image(file, user_id, chapter, ayat_start, ayat_end, script_id):
         return fake_resp
+
     monkeypatch.setattr(upload_service, "upload_image", fake_upload_image)
 
     # 2) prepare form-data: a small in-memory file + metadata JSON
     file_bytes = b"JPEGDATA"
-    metadata = {"user_id": 42, "chapter": 1, "ayat_start": 2, "ayat_end": 3}
+    metadata = {"user_id": 42, "chapter": 1, "ayat_start": 2, "ayat_end": 3, "script_id": 1}
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
@@ -31,6 +33,7 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     assert response.status_code == 200
     assert response.json() == fake_resp
 
+
 @pytest.mark.asyncio
 async def test_upload_bad_metadata(app: FastAPI):
     transport = ASGITransport(app=app)
@@ -42,8 +45,9 @@ async def test_upload_bad_metadata(app: FastAPI):
             data={"metadata": "not-a-json"}
         )
     # your code does `raise HTTPException()` on parse error,
-    # so we expect a 500 (or whatever default you get)
+    # so we expect a 400
     assert response.status_code == 400
+
 
 @pytest.mark.asyncio
 async def test_upload_service_failure(monkeypatch, app: FastAPI):
@@ -51,9 +55,10 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
     # simulate service raising HTTPException
     async def broken_upload(*args, **kwargs):
         raise HTTPException(status_code=502, detail="upstream failed")
+
     monkeypatch.setattr(upload_service, "upload_image", broken_upload)
 
-    metadata = {"user_id": 1, "chapter": 1, "ayat_start": 1, "ayat_end": 1}
+    metadata = {"user_id": 1, "chapter": 1, "ayat_start": 1, "ayat_end": 1, "script_id": 1}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/upload/",
@@ -63,3 +68,36 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 
     assert response.status_code == 502
     assert "upstream failed" in response.json().get("detail", "")
+
+
+@pytest.mark.asyncio
+async def test_get_user_uploads(monkeypatch, app: FastAPI):
+    transport = ASGITransport(app=app)
+    fake_resp = [
+        {
+            "file_path": "https://example.com/a.jpg",
+            "status": "uploaded",
+            "chapter": 1,
+            "ayat_start": 1,
+            "ayat_end": 2,
+        },
+        {
+            "file_path": "https://example.com/b.jpg",
+            "status": "processing",
+            "chapter": 2,
+            "ayat_start": 3,
+            "ayat_end": 4,
+        },
+    ]
+
+    async def fake_get_user_uploads(user_id):
+        return fake_resp
+
+    monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/uploads/42")
+
+    assert resp.status_code == 200
+    assert resp.json() == fake_resp
+

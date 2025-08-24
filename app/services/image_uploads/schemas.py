@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
+from app.configs.constants import ProcessingStatus
 
 class ImageUploadInputRequest(BaseModel):
     user_id: int
@@ -11,3 +12,17 @@ class ImageUploadInputRequest(BaseModel):
 class ImageUploadResponse(BaseModel):
     file_path: str
     message: str
+
+
+class ImageUploadRecord(BaseModel):
+    file_path: str
+    status: ProcessingStatus
+    chapter: int
+    ayat_start: int
+    ayat_end: int
+
+    @field_serializer("status")
+    def serialize_status(
+        self, status: ProcessingStatus, _info
+    ) -> str:
+        return status.name.lower()
