@@ -21,6 +21,23 @@ class ImageUploadRecord(BaseModel):
     ayat_start: int
     ayat_end: int
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, value: str | int | ProcessingStatus):
+        """Allow case-insensitive string or integer inputs for ``status``.
+
+        The response model is declared with :class:`ProcessingStatus`, which
+        means FastAPI will validate any data returned from the service.  During
+        testing the service is often monkeypatched to return dictionaries with
+        lowercase string statuses (e.g. ``"uploaded"``).  Without this
+        validator such values fail enum validation, leading to
+        ``ResponseValidationError``.  Converting them here keeps the public API
+        stable while permitting more flexible internal representations.
+        """
+        if isinstance(value, str):
+            return ProcessingStatus[value.upper()]
+        return value
+
     @field_serializer("status")
     def serialize_status(
         self, status: ProcessingStatus, _info
