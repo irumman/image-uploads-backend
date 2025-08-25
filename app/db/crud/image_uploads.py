@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.configs.constants import ProcessingStatus
 from app.db.models.image_uploads import ImageUploads
-from app.db.pg_dml import insert_record
+from app.db.pg_dml import insert_record, get_many
 
 
 class ImageUploadCRUD:
@@ -34,3 +34,11 @@ class ImageUploadCRUD:
             upload_timestamp=upload_timestamp or datetime.now(timezone.utc),
         )
         return await insert_record(db, row)
+
+    async def get_by_user(
+        self,
+        db: AsyncSession,
+        user_id: int,
+    ) -> list[ImageUploads]:
+        """Fetch all uploads for a given user."""
+        return await get_many(db, ImageUploads, filters={"user_id": user_id})
