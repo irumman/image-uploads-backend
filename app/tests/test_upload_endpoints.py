@@ -4,6 +4,7 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from httpx import AsyncClient, ASGITransport
 
+from app.configs.constants import ProcessingStatus
 from app.services.image_uploads.uploads import upload_service
 
 
@@ -73,6 +74,23 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 @pytest.mark.asyncio
 async def test_get_user_uploads(monkeypatch, app: FastAPI):
     transport = ASGITransport(app=app)
+    fake_req = [
+        {
+            "file_path": "https://example.com/a.jpg",
+            "status": ProcessingStatus.UPLOADED.value,
+            "chapter": 1,
+            "ayat_start": 1,
+            "ayat_end": 2,
+        },
+        {
+            "file_path": "https://example.com/b.jpg",
+            "status": ProcessingStatus.PROCESSING.value,
+            "chapter": 2,
+            "ayat_start": 3,
+            "ayat_end": 4,
+        },
+    ]
+
     fake_resp = [
         {
             "file_path": "https://example.com/a.jpg",
@@ -91,7 +109,7 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
     ]
 
     async def fake_get_user_uploads(user_id):
-        return fake_resp
+        return fake_req
 
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
