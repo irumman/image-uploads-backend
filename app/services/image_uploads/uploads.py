@@ -17,8 +17,8 @@ class UploadService:
         file: UploadFile,
         user_id: int,
         chapter: int,
-        ayat_start: int,
-        ayat_end: int,
+        line_start: int,
+        line_end: int,
         script_id: int
     ) -> ImageUploadResponse:
         """Upload an image and record its metadata."""
@@ -36,8 +36,8 @@ class UploadService:
                     user_id=user_id,
                     file_path=file_url,
                     chapter=chapter,
-                    ayat_start=ayat_start,
-                    ayat_end=ayat_end,
+                    line_start=line_start,
+                    line_end=line_end,
                     script_id=script_id,
                 )
                 return ImageUploadResponse(
@@ -65,8 +65,8 @@ class UploadService:
                 file_path=row.file_path,
                 status=ProcessingStatus(row.status),
                 chapter=row.chapter,
-                ayat_start=row.ayat_start,
-                ayat_end=row.ayat_end,
+                line_start=row.line_start,
+                line_end=row.line_end,
             )
             for row in rows
         ]
