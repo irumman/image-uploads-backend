@@ -14,14 +14,14 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     # 1) arrange: fake upload_service.upload_image to return a known response
     fake_resp = {"file_path": "https://example.com/foo.jpg", "message": "Uploaded successfully"}
 
-    async def fake_upload_image(file, user_id, chapter, ayat_start, ayat_end, script_id):
+    async def fake_upload_image(file, user_id, chapter, line_start, line_end, script_id):
         return fake_resp
 
     monkeypatch.setattr(upload_service, "upload_image", fake_upload_image)
 
     # 2) prepare form-data: a small in-memory file + metadata JSON
     file_bytes = b"JPEGDATA"
-    metadata = {"user_id": 42, "chapter": 1, "ayat_start": 2, "ayat_end": 3, "script_id": 1}
+    metadata = {"user_id": 42, "chapter": 1, "line_start": 2, "line_end": 3, "script_id": 1}
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
@@ -59,7 +59,7 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 
     monkeypatch.setattr(upload_service, "upload_image", broken_upload)
 
-    metadata = {"user_id": 1, "chapter": 1, "ayat_start": 1, "ayat_end": 1, "script_id": 1}
+    metadata = {"user_id": 1, "chapter": 1, "line_start": 1, "line_end": 1, "script_id": 1}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/upload/",
@@ -79,15 +79,15 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
             "file_path": "https://example.com/a.jpg",
             "status": ProcessingStatus.UPLOADED.value,
             "chapter": 1,
-            "ayat_start": 1,
-            "ayat_end": 2,
+            "line_start": 1,
+            "line_end": 2,
         },
         {
             "file_path": "https://example.com/b.jpg",
             "status": ProcessingStatus.PROCESSING.value,
             "chapter": 2,
-            "ayat_start": 3,
-            "ayat_end": 4,
+            "line_start": 3,
+            "line_end": 4,
         },
     ]
 
@@ -96,15 +96,15 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
             "file_path": "https://example.com/a.jpg",
             "status": "uploaded",
             "chapter": 1,
-            "ayat_start": 1,
-            "ayat_end": 2,
+            "line_start": 1,
+            "line_end": 2,
         },
         {
             "file_path": "https://example.com/b.jpg",
             "status": "processing",
             "chapter": 2,
-            "ayat_start": 3,
-            "ayat_end": 4,
+            "line_start": 3,
+            "line_end": 4,
         },
     ]
 

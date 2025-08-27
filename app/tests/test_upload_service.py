@@ -5,12 +5,12 @@ import app.services.image_uploads.uploads as uploads_module
 
 
 class DummyRow:
-    def __init__(self, file_path: str, status: ProcessingStatus, chapter: int, ayat_start: int, ayat_end: int):
+    def __init__(self, file_path: str, status: ProcessingStatus, chapter: int, line_start: int, line_end: int):
         self.file_path = file_path
         self.status = status
         self.chapter = chapter
-        self.ayat_start = ayat_start
-        self.ayat_end = ayat_end
+        self.line_start = line_start
+        self.line_end = line_end
 
 
 class DummySessionContext:
@@ -44,8 +44,8 @@ async def test_get_user_uploads_serializes_status(monkeypatch):
         "file_path": "https://a.jpg",
         "status": "uploaded",
         "chapter": 1,
-        "ayat_start": 1,
-        "ayat_end": 2,
+        "line_start": 1,
+        "line_end": 2,
     }
     assert records[1].model_dump()["status"] == "processing"
 

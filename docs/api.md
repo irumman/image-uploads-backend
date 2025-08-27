@@ -15,7 +15,7 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 - **Description:** Upload a new image for a user.
 - **Request:** `multipart/form-data` with fields:
   - `file`: image file to upload.
-  - `metadata`: JSON string with keys `user_id`, `chapter`, `ayat_start`, `ayat_end`, and `script_id`.
+  - `metadata`: JSON string with keys `user_id`, `chapter`, `line_start`, `line_end`, and `script_id`.
 - **Response:** `ImageUploadResponse` describing the stored image.
 
 ## List User Uploads

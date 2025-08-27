@@ -4,8 +4,8 @@ from app.configs.constants import ProcessingStatus
 class ImageUploadInputRequest(BaseModel):
     user_id: int
     chapter: int
-    ayat_start: int
-    ayat_end: int
+    line_start: int
+    line_end: int
     script_id: int
 
 
@@ -18,8 +18,8 @@ class ImageUploadRecord(BaseModel):
     file_path: str
     status: ProcessingStatus
     chapter: int
-    ayat_start: int
-    ayat_end: int
+    line_start: int
+    line_end: int
 
     @field_serializer("status")
     def serialize_status(
