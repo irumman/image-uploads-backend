@@ -45,8 +45,8 @@ class DOSpace:
             return self._get_public_url(key)
 
         except Exception as e:
-            logging.error(f"Failed to upload file to DO Spaces: {e}")
-            raise Exception(f"Failed to upload file: {e}")
+            logging.exception("Failed to upload file to DO Spaces")
+            raise Exception("Failed to upload file") from e
 
         finally:
             if os.path.exists(temp_file):
@@ -85,7 +85,8 @@ class DOSpace:
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchKey':
                 return None
-            raise Exception(f"Failed to get file: {str(e)}")
+            logging.exception("Failed to get file")
+            raise Exception("Failed to get file") from e
 
     def delete_file(self, key: str) -> bool:
         """
@@ -107,7 +108,8 @@ class DOSpace:
             )
             return True
         except Exception as e:
-            raise Exception(f"Failed to delete file: {str(e)}")
+            logging.exception("Failed to delete file")
+            raise Exception("Failed to delete file") from e
 
     def get_file_url(self, key: str) -> Optional[str]:
         """

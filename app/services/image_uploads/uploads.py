@@ -1,5 +1,6 @@
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
+import logging
 
 from app.db.pg_engine import sessionmanager
 from app.db.crud.image_uploads import ImageUploadCRUD
@@ -45,6 +46,7 @@ class UploadService:
                     message="Uploaded successfully",
                 )
             except Exception as e:
+                logging.exception("Failed to upload image")
                 raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
     async def get_user_uploads(self, user_id: int) -> list[ImageUploadRecord]:

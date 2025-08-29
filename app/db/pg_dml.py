@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import TypeVar, Any, Optional, Type, Sequence
 from sqlalchemy import exc, select
 from sqlalchemy.orm import InstrumentedAttribute
+import logging
 
 T = TypeVar("T", bound=object)
 
@@ -16,7 +17,8 @@ async def insert_record(
         return model_instance
     except exc.SQLAlchemyError as e:
         await session.rollback()
-        raise e
+        logging.exception("Failed to insert record")
+        raise
 
 async def upsert_record(session: AsyncSession, instance: T) -> T:
     try:
@@ -25,6 +27,7 @@ async def upsert_record(session: AsyncSession, instance: T) -> T:
         return merged
     except Exception:
         await session.rollback()
+        logging.exception("Failed to upsert record")
         raise
 
 
