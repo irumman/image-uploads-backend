@@ -60,9 +60,15 @@ class EmailRegistration:
 
         # Generate email confirmation token
         token = jwt_helper.create_email_token({"sub": user.email})
-        await self._send_confirmation_email(user, token)
-        return EmailRegistrationResponse(name=user.name, email=user.email,
-                                         message="User registered successfully. Confirmation email sent.")
+        if settings.skip_email_verify:
+            user.is_active = True
+            await upsert_record(s, user)
+            return EmailRegistrationResponse(name=user.name, email=user.email,
+                                             message="User registered successfully. Skipped verify email.")
+        else:
+            await self._send_confirmation_email(user, token)
+            return EmailRegistrationResponse(name=user.name, email=user.email,
+                                             message="User registered successfully. Confirmation email sent.")
 
 
     async def verify_email(self, token: str) -> str:
