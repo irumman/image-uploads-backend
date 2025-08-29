@@ -6,7 +6,7 @@ from app.core.logger import Logger
 
 T = TypeVar("T", bound=object)
 
-logger = Logger.get_logger(__name__)
+logger = Logger().get_logger(__name__)
 
 async def insert_record(
     session: AsyncSession,

@@ -13,7 +13,7 @@ from app.db.crud.app_users import AppUserCrud
 
 from .schemas import EmailRegistrationInput, EmailRegistrationResponse
 
-logger = Logger.get_logger(__name__)
+logger = Logger().get_logger(__name__)
 
 
 class EmailRegistration:

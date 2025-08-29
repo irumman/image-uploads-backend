@@ -20,7 +20,7 @@ from app.services.auth.email_password.schemas import (
     LogoutResponse,
 )
 
-logger = Logger.get_logger(__name__)
+logger = Logger().get_logger(__name__)
 router = APIRouter()
 
 # The upload endpoint previously omitted a trailing slash.  FastAPI interprets

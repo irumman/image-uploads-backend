@@ -8,7 +8,7 @@ from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadR
 from app.services.storage.do_space import do_space
 from app.configs.constants import ProcessingStatus
 
-logger = Logger.get_logger(__name__)
+logger = Logger().get_logger(__name__)
 
 
 class UploadService:

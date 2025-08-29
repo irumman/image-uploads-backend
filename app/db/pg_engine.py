@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from app.core.logger import Logger
 
-logger = Logger.get_logger(__name__)
+logger = Logger().get_logger(__name__)
 
 
 class PgEngine:

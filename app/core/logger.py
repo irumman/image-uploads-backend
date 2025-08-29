@@ -1,15 +1,16 @@
 import logging
 
+
 class Logger:
-    _configured = False
+    """Singleton logger provider."""
 
-    @classmethod
-    def _configure(cls) -> None:
-        if not cls._configured:
+    _instance: "Logger" | None = None
+
+    def __new__(cls) -> "Logger":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
             logging.basicConfig(level=logging.INFO)
-            cls._configured = True
+        return cls._instance
 
-    @classmethod
-    def get_logger(cls, name: str) -> logging.Logger:
-        cls._configure()
+    def get_logger(self, name: str) -> logging.Logger:
         return logging.getLogger(name)
