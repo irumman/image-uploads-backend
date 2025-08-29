@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     do_spaces_endpoint: str = 'https://example.com'
 
     # email related
+    skip_email_verify: bool = False
     mail_verify_base_url: str = 'mail-verify-base-url'
     mail_username: str = "mail_username"
     mail_password: SecretStr = "mail_password"
