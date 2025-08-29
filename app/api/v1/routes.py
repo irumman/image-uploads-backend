@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Depends, Request
-import logging
+from app.core.logger import Logger
 
 from app.db.pg_engine import get_db_session
 from app.services.image_uploads.schemas import (
@@ -20,6 +20,7 @@ from app.services.auth.email_password.schemas import (
     LogoutResponse,
 )
 
+logger = Logger.get_logger(__name__)
 router = APIRouter()
 
 # The upload endpoint previously omitted a trailing slash.  FastAPI interprets
@@ -31,7 +32,7 @@ async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
     except Exception:
-        logging.exception("Invalid upload metadata")
+        logger.exception("Invalid upload metadata")
         raise HTTPException(status_code=400, detail="Invalid upload metadata")
     upload_resp = await upload_service.upload_image(
         file,
