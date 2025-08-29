@@ -7,9 +7,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from app.core.logger import Logger
-
-logger = Logger().get_logger(__name__)
+from app.core.logger import logger
 
 
 class PgEngine:

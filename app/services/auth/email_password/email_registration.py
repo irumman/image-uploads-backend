@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from fastapi_mail import FastMail, MessageSchema, MessageType
 from sqlalchemy.exc import SQLAlchemyError
-from app.core.logger import Logger
+from app.core.logger import logger
 
 from app.db.pg_engine import sessionmanager
 from app.db.pg_dml import insert_record, upsert_record
@@ -12,8 +12,6 @@ from app.configs.settings import settings
 from app.db.crud.app_users import AppUserCrud
 
 from .schemas import EmailRegistrationInput, EmailRegistrationResponse
-
-logger = Logger().get_logger(__name__)
 
 
 class EmailRegistration:

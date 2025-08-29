@@ -6,9 +6,7 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from app.configs.settings import settings
-from app.core.logger import Logger
-
-logger = Logger().get_logger(__name__)
+from app.core.logger import logger
 
 
 class DOSpace:

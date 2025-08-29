@@ -2,11 +2,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import TypeVar, Any, Optional, Type, Sequence
 from sqlalchemy import exc, select
 from sqlalchemy.orm import InstrumentedAttribute
-from app.core.logger import Logger
+from app.core.logger import logger
 
 T = TypeVar("T", bound=object)
 
-logger = Logger().get_logger(__name__)
 
 async def insert_record(
     session: AsyncSession,

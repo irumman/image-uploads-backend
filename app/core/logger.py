@@ -14,3 +14,8 @@ class Logger:
 
     def get_logger(self, name: str) -> logging.Logger:
         return logging.getLogger(name)
+
+
+logger = Logger().get_logger(__name__)
+
+__all__ = ["Logger", "logger"]

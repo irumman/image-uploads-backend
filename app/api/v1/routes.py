@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Depends, Request
-from app.core.logger import Logger
+from app.core.logger import logger
 
 from app.db.pg_engine import get_db_session
 from app.services.image_uploads.schemas import (
@@ -20,7 +20,6 @@ from app.services.auth.email_password.schemas import (
     LogoutResponse,
 )
 
-logger = Logger().get_logger(__name__)
 router = APIRouter()
 
 # The upload endpoint previously omitted a trailing slash.  FastAPI interprets

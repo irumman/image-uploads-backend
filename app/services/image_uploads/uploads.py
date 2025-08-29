@@ -1,14 +1,12 @@
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
-from app.core.logger import Logger
+from app.core.logger import logger
 
 from app.db.pg_engine import sessionmanager
 from app.db.crud.image_uploads import ImageUploadCRUD
 from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadRecord
 from app.services.storage.do_space import do_space
 from app.configs.constants import ProcessingStatus
-
-logger = Logger().get_logger(__name__)
 
 
 class UploadService:
