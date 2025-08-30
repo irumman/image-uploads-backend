@@ -6,15 +6,19 @@ from httpx import AsyncClient, ASGITransport
 
 from app.configs.constants import ProcessingStatus
 from app.services.image_uploads.uploads import upload_service
+from app.db.pg_engine import get_db_session
 
 
 @pytest.mark.asyncio
 async def test_upload_success(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
     # 1) arrange: fake upload_service.upload_image to return a known response
     fake_resp = {"file_path": "https://example.com/foo.jpg", "message": "Uploaded successfully"}
 
-    async def fake_upload_image(file, user_id, chapter, line_start, line_end, script_id):
+    async def fake_upload_image(db, file, user_id, chapter, line_start, line_end, script_id):
         return fake_resp
 
     monkeypatch.setattr(upload_service, "upload_image", fake_upload_image)
@@ -33,10 +37,14 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     # 3) assert
     assert response.status_code == 200
     assert response.json() == fake_resp
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
 async def test_upload_bad_metadata(app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
     # no monkeypatch: let model_validate_json blow up
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -48,10 +56,14 @@ async def test_upload_bad_metadata(app: FastAPI):
     # your code does `raise HTTPException()` on parse error,
     # so we expect a 400
     assert response.status_code == 400
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
 async def test_upload_service_failure(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
     # simulate service raising HTTPException
     async def broken_upload(*args, **kwargs):
@@ -69,6 +81,7 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 
     assert response.status_code == 502
     assert "upstream failed" in response.json().get("detail", "")
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
