@@ -1,15 +1,21 @@
 import logging
 
+from app.configs.settings import settings
+
 
 class Logger:
-    """Singleton logger provider."""
 
-    _instance: "Logger" | None = None
+    _instance: "Logger" = None
 
     def __new__(cls) -> "Logger":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            logging.basicConfig(level=logging.INFO)
+            logging.basicConfig(
+                level=settings.log_level.upper(),
+                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+
         return cls._instance
 
     def get_logger(self, name: str) -> logging.Logger:

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     env: Literal["dev", "staging", "production"] = "dev"
     debug: bool = True
     session_ttl_minutes: int = 15
+    log_level: str = "INFO"
 
 
     azure_vision_key: str = 'azure_vision_key'

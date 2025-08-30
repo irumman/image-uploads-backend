@@ -57,6 +57,10 @@ sessionmanager = PgEngine()
 
 # For dependency injection
 async def get_db_session():
-    async with sessionmanager.session() as session:
-        yield session
+    try:
+        async with sessionmanager.session() as session:
+            yield session
+    except Exception as e:
+        logger.exception(f"Unable to create database session")
+        raise
 
