@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from app.core.logger import logger
+
 
 class PgEngine:
     def __init__(self):
@@ -34,6 +36,7 @@ class PgEngine:
                 yield connection
             except Exception:
                 await connection.rollback()
+                logger.exception("Database connection context failed")
                 raise
 
     @asynccontextmanager
@@ -44,6 +47,7 @@ class PgEngine:
                 await session.commit()
             except Exception:
                 await session.rollback()
+                logger.exception("Database session context failed")
                 raise
             finally:
                 await session.close()
@@ -53,6 +57,10 @@ sessionmanager = PgEngine()
 
 # For dependency injection
 async def get_db_session():
-    async with sessionmanager.session() as session:
-        yield session
+    try:
+        async with sessionmanager.session() as session:
+            yield session
+    except Exception as e:
+        logger.exception(f"Unable to create database session")
+        raise
 

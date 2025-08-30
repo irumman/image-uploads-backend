@@ -1,5 +1,4 @@
 import os
-import logging
 import asyncio
 from uuid import uuid4
 from typing import Optional
@@ -7,6 +6,8 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from app.configs.settings import settings
+from app.core.logger import logger
+
 
 class DOSpace:
     def __init__(self):
@@ -45,8 +46,8 @@ class DOSpace:
             return self._get_public_url(key)
 
         except Exception as e:
-            logging.error(f"Failed to upload file to DO Spaces: {e}")
-            raise Exception(f"Failed to upload file: {e}")
+            logger.exception("Failed to upload file to DO Spaces")
+            raise Exception("Failed to upload file") from e
 
         finally:
             if os.path.exists(temp_file):
@@ -85,7 +86,8 @@ class DOSpace:
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchKey':
                 return None
-            raise Exception(f"Failed to get file: {str(e)}")
+            logger.exception("Failed to get file")
+            raise Exception("Failed to get file") from e
 
     def delete_file(self, key: str) -> bool:
         """
@@ -107,7 +109,8 @@ class DOSpace:
             )
             return True
         except Exception as e:
-            raise Exception(f"Failed to delete file: {str(e)}")
+            logger.exception("Failed to delete file")
+            raise Exception("Failed to delete file") from e
 
     def get_file_url(self, key: str) -> Optional[str]:
         """

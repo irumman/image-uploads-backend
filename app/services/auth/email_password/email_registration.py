@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from fastapi_mail import FastMail, MessageSchema, MessageType
 from sqlalchemy.exc import SQLAlchemyError
+from app.core.logger import logger
 
 from app.db.pg_engine import sessionmanager
 from app.db.pg_dml import insert_record, upsert_record
@@ -28,6 +29,7 @@ class EmailRegistration:
                 )
                 return await insert_record(s, user)
             except SQLAlchemyError as e:
+                logger.exception("Failed to insert user record")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Failed to insert record: {str(e)}"
@@ -92,6 +94,7 @@ class EmailRegistration:
                 return "Email verified successfully."
             except SQLAlchemyError:
                 await s.rollback()
+                logger.exception("Database error while verifying email")
                 raise HTTPException(status_code=500,
                                     detail="Database error while verifying email")
 
