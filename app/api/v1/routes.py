@@ -27,19 +27,24 @@ router = APIRouter()
 # path ending with ``/`` (as the tests do).  Declaring the route with the
 # trailing slash avoids the redirect and returns the intended status codes.
 @router.post("/upload/", response_model=ImageUploadResponse)
-async def upload_image(file: UploadFile = File(...), metadata: str = Form(...)):
+async def upload_image(
+    file: UploadFile = File(...),
+    metadata: str = Form(...),
+    db=Depends(get_db_session),
+):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
     except Exception:
         logger.exception("Invalid upload metadata")
         raise HTTPException(status_code=400, detail="Invalid upload metadata")
     upload_resp = await upload_service.upload_image(
+        db,
         file,
         user_id=meta_obj.user_id,
         chapter=meta_obj.chapter,
         line_start=meta_obj.line_start,
         line_end=meta_obj.line_end,
-        script_id=meta_obj.script_id
+        script_id=meta_obj.script_id,
     )
     return upload_resp
 
@@ -49,14 +54,19 @@ async def get_user_uploads(user_id: int):
     return await upload_service.get_user_uploads(user_id)
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=201)
-async def register(user_in: EmailRegistrationInput):
-    response: EmailRegistrationResponse = await email_registration.register(user_data=user_in)
+async def register(user_in: EmailRegistrationInput, db=Depends(get_db_session)):
+    response: EmailRegistrationResponse = await email_registration.register(
+        db, user_data=user_in
+    )
     return response
 
 
 @router.get("/verify-email", response_model=str, status_code=200)
-async def register(token: str = Query(..., description="JWT sent in the verification link"),):
-    response: str = await email_registration.verify_email(token=token)
+async def verify_email(
+    token: str = Query(..., description="JWT sent in the verification link"),
+    db=Depends(get_db_session),
+):
+    response: str = await email_registration.verify_email(db, token=token)
     return response
 
 @router.post("/login",response_model=LoginEmailResponse, status_code=200)

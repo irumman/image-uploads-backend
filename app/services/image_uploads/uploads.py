@@ -2,6 +2,8 @@ from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from app.core.logger import logger
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.pg_engine import sessionmanager
 from app.db.crud.image_uploads import ImageUploadCRUD
 from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadRecord
@@ -15,12 +17,13 @@ class UploadService:
 
     async def upload_image(
         self,
+        db: AsyncSession,
         file: UploadFile,
         user_id: int,
         chapter: int,
         line_start: int,
         line_end: int,
-        script_id: int
+        script_id: int,
     ) -> ImageUploadResponse:
         """Upload an image and record its metadata."""
         file_content = await file.read()
@@ -30,24 +33,23 @@ class UploadService:
             file_content=file_content,
             file_ext=file_ext,
         )
-        async with sessionmanager.session() as session:
-            try:
-                await self.crud.create(
-                    session,
-                    user_id=user_id,
-                    file_path=file_url,
-                    chapter=chapter,
-                    line_start=line_start,
-                    line_end=line_end,
-                    script_id=script_id,
-                )
-                return ImageUploadResponse(
-                    file_path=file_url,
-                    message="Uploaded successfully",
-                )
-            except Exception as e:
-                logger.exception("Failed to upload image")
-                raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+        try:
+            await self.crud.create(
+                db,
+                user_id=user_id,
+                file_path=file_url,
+                chapter=chapter,
+                line_start=line_start,
+                line_end=line_end,
+                script_id=script_id,
+            )
+            return ImageUploadResponse(
+                file_path=file_url,
+                message="Uploaded successfully",
+            )
+        except Exception as e:
+            logger.exception("Failed to upload image")
+            raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
     async def get_user_uploads(self, user_id: int) -> list[ImageUploadRecord]:
         """Return all uploads for a specific user.

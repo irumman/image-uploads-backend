@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from fastapi_mail import FastMail, MessageSchema, MessageType
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logger import logger
 
-from app.db.pg_engine import sessionmanager
 from app.db.pg_dml import insert_record, upsert_record
 from app.db.models.app_users import AppUser
 from app.configs.email_configs import email_conf
@@ -19,21 +19,20 @@ class EmailRegistration:
         # Mail client
         self.mailer = FastMail(email_conf.smtp_conf)
 
-    async def _create_user_record(self, user_data, hashed_password) -> AppUser:
-        async with sessionmanager.session() as s:
-            try:
-                user = AppUser(
-                    name=user_data.name,
-                    email=user_data.email,
-                    password=hashed_password
-                )
-                return await insert_record(s, user)
-            except SQLAlchemyError as e:
-                logger.exception("Failed to insert user record")
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Failed to insert record: {str(e)}"
-                )
+    async def _create_user_record(self, db: AsyncSession, user_data, hashed_password) -> AppUser:
+        try:
+            user = AppUser(
+                name=user_data.name,
+                email=user_data.email,
+                password=hashed_password,
+            )
+            return await insert_record(db, user)
+        except SQLAlchemyError as e:
+            logger.exception("Failed to insert user record")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to insert record: {str(e)}"
+            )
 
     async def _send_confirmation_email(self, user, token: str) -> None:
         message = MessageSchema(
@@ -49,53 +48,60 @@ class EmailRegistration:
         )
         await self.mailer.send_message(message)
 
-    async def register(self, user_data: EmailRegistrationInput) -> EmailRegistrationResponse:
+    async def register(
+        self, db: AsyncSession, user_data: EmailRegistrationInput
+    ) -> EmailRegistrationResponse:
         # Check for existing user
-        async with sessionmanager.session() as s:
-            existing = await AppUserCrud(s).get_active_user_by_email(user_data.email)
-            if existing:
-                raise HTTPException(status_code=400, detail="Email already registered")
+        existing = await AppUserCrud(db).get_active_user_by_email(user_data.email)
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
         # Hash the password and create the user record
         hashed_password = jwt_helper.pwd_context.hash(user_data.password)
-        user = await self._create_user_record(user_data, hashed_password)
+        user = await self._create_user_record(db, user_data, hashed_password)
 
         # Generate email confirmation token
         token = jwt_helper.create_email_token({"sub": user.email})
         if settings.skip_email_verify:
             user.is_active = True
-            await upsert_record(s, user)
-            return EmailRegistrationResponse(name=user.name, email=user.email,
-                                             message="User registered successfully. Skipped verify email.")
+            await upsert_record(db, user)
+            return EmailRegistrationResponse(
+                name=user.name,
+                email=user.email,
+                message="User registered successfully. Skipped verify email.",
+            )
         else:
             await self._send_confirmation_email(user, token)
-            return EmailRegistrationResponse(name=user.name, email=user.email,
-                                             message="User registered successfully. Confirmation email sent.")
+            return EmailRegistrationResponse(
+                name=user.name,
+                email=user.email,
+                message="User registered successfully. Confirmation email sent.",
+            )
 
 
-    async def verify_email(self, token: str) -> str:
+    async def verify_email(self, db: AsyncSession, token: str) -> str:
         payload = jwt_helper.verify_email_token(token)
         if payload is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         email = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        async with sessionmanager.session() as s:
-            try:
-                user: AppUser = await AppUserCrud(s).get_inactive_user_by_email(email)
-                if user is None:
-                    raise HTTPException(status_code=404, detail="User not found")
+        try:
+            user: AppUser = await AppUserCrud(db).get_inactive_user_by_email(email)
+            if user is None:
+                raise HTTPException(status_code=404, detail="User not found")
 
-                if user.is_active:
-                    return "Email already verified."
+            if user.is_active:
+                return "Email already verified."
 
-                user.is_active = True
-                await upsert_record(s, user)
-                return "Email verified successfully."
-            except SQLAlchemyError:
-                await s.rollback()
-                logger.exception("Database error while verifying email")
-                raise HTTPException(status_code=500,
-                                    detail="Database error while verifying email")
+            user.is_active = True
+            await upsert_record(db, user)
+            return "Email verified successfully."
+        except SQLAlchemyError:
+            await db.rollback()
+            logger.exception("Database error while verifying email")
+            raise HTTPException(
+                status_code=500, detail="Database error while verifying email"
+            )
 
 email_registration = EmailRegistration()
