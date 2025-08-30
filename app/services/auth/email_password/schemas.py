@@ -23,6 +23,7 @@ class LoginEmailResponse(BaseModel):
     access_token: str
     token_type: str = "Bearer"
     message: str
+    user_id: int
     refresh_token: str | None = None
 
 
