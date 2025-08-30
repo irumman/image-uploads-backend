@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Dep
 from app.core.logger import logger
 
 from app.db.pg_engine import get_db_session
+from app.api.auth import auth_dependency
 from app.services.image_uploads.schemas import (
     ImageUploadResponse,
     ImageUploadInputRequest,
@@ -31,16 +32,19 @@ async def upload_image(
     file: UploadFile = File(...),
     metadata: str = Form(...),
     db=Depends(get_db_session),
+    user_id: int = Depends(auth_dependency),
 ):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
     except Exception:
         logger.exception("Invalid upload metadata")
         raise HTTPException(status_code=400, detail="Invalid upload metadata")
+    if meta_obj.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
     upload_resp = await upload_service.upload_image(
         db,
         file,
-        user_id=meta_obj.user_id,
+        user_id=user_id,
         chapter=meta_obj.chapter,
         line_start=meta_obj.line_start,
         line_end=meta_obj.line_end,

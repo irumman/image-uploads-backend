@@ -13,9 +13,10 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 
 - **Endpoint:** `POST /api/upload/`
 - **Description:** Upload a new image for a user.
+- **Headers:** `Authorization: Bearer <access_token>`
 - **Request:** `multipart/form-data` with fields:
   - `file`: image file to upload.
-  - `metadata`: JSON string with keys `user_id`, `chapter`, `line_start`, `line_end`, and `script_id`.
+  - `metadata`: JSON string with keys `user_id`, `chapter`, `line_start`, `line_end`, and `script_id`. The `user_id` must match the authenticated user's ID from the token.
 - **Response:** `ImageUploadResponse` describing the stored image.
 
 ## List User Uploads
