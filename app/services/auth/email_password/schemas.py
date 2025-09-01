@@ -28,7 +28,6 @@ class LoginEmailResponse(BaseModel):
 
 
 class LogoutInput(BaseModel):
-    user_id: int
     refresh_token: str
 
 

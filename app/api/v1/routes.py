@@ -87,8 +87,12 @@ async def login(body: LoginEmailInput, request: Request, db=Depends(get_db_sessi
 
 
 @router.post("/logout", response_model=LogoutResponse, status_code=200)
-async def logout(body: LogoutInput, db=Depends(get_db_session)):
-    service = Logout(db, body.user_id, body.refresh_token)
+async def logout(
+    body: LogoutInput,
+    db=Depends(get_db_session),
+    user_id: int = Depends(auth_dependency),
+):
+    service = Logout(db, user_id, body.refresh_token)
     return await service.logout()
 
 

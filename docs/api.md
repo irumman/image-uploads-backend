@@ -48,7 +48,9 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 ## Logout
 
 - **Endpoint:** `POST /api/logout`
-- **Description:** Invalidate a user's refresh token and end their session.
+- **Description:** Invalidate the authenticated user's refresh token and end their session. The user ID is taken from the Bearer token.
+- **Headers:** `Authorization: Bearer <access_token>`
+- **Request:** JSON object with `refresh_token`.
 - **Response:** `LogoutResponse` confirming logout.
 
 ## Root

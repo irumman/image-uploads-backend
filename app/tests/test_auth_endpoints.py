@@ -6,6 +6,7 @@ from app.services.auth.email_password.login_user_pass import LoginUserPass
 from app.services.auth.email_password.logout import Logout
 from app.services.auth.email_password.schemas import LoginEmailResponse, LogoutResponse
 from app.db.pg_engine import get_db_session
+from app.core.jwt_helper import jwt_helper
 
 
 @pytest.mark.asyncio
@@ -74,10 +75,13 @@ async def test_logout_success(monkeypatch, app: FastAPI):
 
     monkeypatch.setattr(Logout, "logout", fake_logout)
     transport = ASGITransport(app=app)
+    token = jwt_helper.create_access_token(sub=1)
+    headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/logout",
-            json={"user_id": 1, "refresh_token": "token"},
+            json={"refresh_token": "token"},
+            headers=headers,
         )
 
     assert response.status_code == 200
@@ -96,10 +100,13 @@ async def test_logout_invalid_session(monkeypatch, app: FastAPI):
 
     monkeypatch.setattr(Logout, "logout", fake_logout)
     transport = ASGITransport(app=app)
+    token = jwt_helper.create_access_token(sub=1)
+    headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/logout",
-            json={"user_id": 1, "refresh_token": "bad"},
+            json={"refresh_token": "bad"},
+            headers=headers,
         )
 
     assert response.status_code == 401
