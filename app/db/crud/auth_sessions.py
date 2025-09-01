@@ -73,6 +73,20 @@ class AuthSessionCRUD:
                 return r
         return None
 
+    async def get_active_by_id(
+        self,
+        db: AsyncSession,
+        *,
+        session_id: uuid.UUID,
+    ) -> Optional[AuthSessions]:
+        row = await get_by_id(db, AuthSessions, session_id)
+        if not row:
+            return None
+        now = datetime.now(timezone.utc)
+        if row.is_revoked or row.expires_at <= now:
+            return None
+        return row
+
     async def revoke(
         self,
         db: AsyncSession,

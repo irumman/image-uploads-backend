@@ -1,12 +1,13 @@
 import pytest
 from fastapi import FastAPI, HTTPException
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.services.auth.email_password.login_user_pass import LoginUserPass
 from app.services.auth.email_password.logout import Logout
 from app.services.auth.email_password.schemas import LoginEmailResponse, LogoutResponse
 from app.db.pg_engine import get_db_session
 from app.core.jwt_helper import jwt_helper
+from app.api.auth import auth_dependency
 
 
 @pytest.mark.asyncio
@@ -69,6 +70,7 @@ async def test_logout_success(monkeypatch, app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 1
 
     async def fake_logout(self):
         return LogoutResponse(message="Logout successful")
@@ -94,6 +96,7 @@ async def test_logout_invalid_session(monkeypatch, app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 1
 
     async def fake_logout(self):
         raise HTTPException(status_code=401, detail="Invalid session")

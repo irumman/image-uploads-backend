@@ -2,12 +2,13 @@ import json
 import io
 import pytest
 from fastapi import FastAPI, HTTPException
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.configs.constants import ProcessingStatus
 from app.services.image_uploads.uploads import upload_service
 from app.db.pg_engine import get_db_session
 from app.core.jwt_helper import jwt_helper
+from app.api.auth import auth_dependency
 
 
 @pytest.mark.asyncio
@@ -15,6 +16,7 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 42
     transport = ASGITransport(app=app)
     # 1) arrange: fake upload_service.upload_image to return a known response
     fake_resp = {"file_path": "https://example.com/foo.jpg", "message": "Uploaded successfully"}
@@ -50,6 +52,7 @@ async def test_upload_bad_metadata(app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 1
     transport = ASGITransport(app=app)
     # no monkeypatch: let model_validate_json blow up
     token = jwt_helper.create_access_token(sub=1)
@@ -73,6 +76,7 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 1
     transport = ASGITransport(app=app)
     # simulate service raising HTTPException
     async def broken_upload(*args, **kwargs):
@@ -101,6 +105,7 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 42
     transport = ASGITransport(app=app)
     fake_req = [
         {
@@ -157,6 +162,7 @@ async def test_get_user_uploads_empty(monkeypatch, app: FastAPI):
     async def override_get_db_session():
         yield None
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[auth_dependency] = lambda: 42
     transport = ASGITransport(app=app)
 
     async def fake_get_user_uploads(db, user_id):
