@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Dep
 from app.core.logger import logger
 
 from app.db.pg_engine import get_db_session
+from app.api.auth import auth_dependency
 from app.services.image_uploads.schemas import (
     ImageUploadResponse,
     ImageUploadInputRequest,
@@ -31,6 +32,7 @@ async def upload_image(
     file: UploadFile = File(...),
     metadata: str = Form(...),
     db=Depends(get_db_session),
+    user_id: int = Depends(auth_dependency),
 ):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
@@ -40,7 +42,7 @@ async def upload_image(
     upload_resp = await upload_service.upload_image(
         db,
         file,
-        user_id=meta_obj.user_id,
+        user_id=user_id,
         chapter=meta_obj.chapter,
         line_start=meta_obj.line_start,
         line_end=meta_obj.line_end,
@@ -49,9 +51,12 @@ async def upload_image(
     return upload_resp
 
 
-@router.get("/uploads/{user_id}", response_model=list[ImageUploadRecord])
-async def get_user_uploads(user_id: int):
-    return await upload_service.get_user_uploads(user_id)
+@router.get("/uploads/", response_model=list[ImageUploadRecord])
+async def get_user_uploads(
+    db=Depends(get_db_session),
+    user_id: int = Depends(auth_dependency),
+):
+    return await upload_service.get_user_uploads(db, user_id)
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=201)
 async def register(user_in: EmailRegistrationInput, db=Depends(get_db_session)):
@@ -77,8 +82,12 @@ async def login(body: LoginEmailInput, request: Request, db=Depends(get_db_sessi
 
 
 @router.post("/logout", response_model=LogoutResponse, status_code=200)
-async def logout(body: LogoutInput, db=Depends(get_db_session)):
-    service = Logout(db, body.user_id, body.refresh_token)
+async def logout(
+    body: LogoutInput,
+    db=Depends(get_db_session),
+    user_id: int = Depends(auth_dependency),
+):
+    service = Logout(db, user_id, body.refresh_token)
     return await service.logout()
 
 

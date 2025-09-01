@@ -1,7 +1,6 @@
 import pytest
 from app.services.image_uploads.uploads import UploadService
 from app.configs.constants import ProcessingStatus
-import app.services.image_uploads.uploads as uploads_module
 
 
 class DummyRow:
@@ -13,33 +12,19 @@ class DummyRow:
         self.line_end = line_end
 
 
-class DummySessionContext:
-    async def __aenter__(self):
-        return object()
-
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
-
-
-class DummySessionManager:
-    def session(self):
-        return DummySessionContext()
-
-
 @pytest.mark.asyncio
 async def test_get_user_uploads_serializes_status(monkeypatch):
     service = UploadService()
 
-    async def fake_get_by_user(session, user_id):
+    async def fake_get_by_user(db, user_id):
         return [
             DummyRow("https://a.jpg", ProcessingStatus.UPLOADED, 1, 1, 2),
             DummyRow("https://b.jpg", ProcessingStatus.PROCESSING, 2, 3, 4),
         ]
 
     monkeypatch.setattr(service.crud, "get_by_user", fake_get_by_user)
-    monkeypatch.setattr(uploads_module, "sessionmanager", DummySessionManager())
 
-    records = await service.get_user_uploads(5)
+    records = await service.get_user_uploads(None, 5)
     assert records[0].model_dump() == {
         "file_path": "https://a.jpg",
         "status": "uploaded",
@@ -54,12 +39,11 @@ async def test_get_user_uploads_serializes_status(monkeypatch):
 async def test_get_user_uploads_empty(monkeypatch):
     service = UploadService()
 
-    async def fake_get_by_user(session, user_id):
+    async def fake_get_by_user(db, user_id):
         return []
 
     monkeypatch.setattr(service.crud, "get_by_user", fake_get_by_user)
-    monkeypatch.setattr(uploads_module, "sessionmanager", DummySessionManager())
 
-    records = await service.get_user_uploads(5)
+    records = await service.get_user_uploads(None, 5)
     assert records == []
     assert isinstance(records, list)

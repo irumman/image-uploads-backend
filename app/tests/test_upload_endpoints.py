@@ -7,6 +7,7 @@ from httpx import AsyncClient, ASGITransport
 from app.configs.constants import ProcessingStatus
 from app.services.image_uploads.uploads import upload_service
 from app.db.pg_engine import get_db_session
+from app.core.jwt_helper import jwt_helper
 
 
 @pytest.mark.asyncio
@@ -25,13 +26,17 @@ async def test_upload_success(monkeypatch, app: FastAPI):
 
     # 2) prepare form-data: a small in-memory file + metadata JSON
     file_bytes = b"JPEGDATA"
-    metadata = {"user_id": 42, "chapter": 1, "line_start": 2, "line_end": 3, "script_id": 1}
+    metadata = {"chapter": 1, "line_start": 2, "line_end": 3, "script_id": 1}
+
+    token = jwt_helper.create_access_token(sub=42)
+    headers = {"Authorization": f"Bearer {token}"}
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/upload/",
             files={"file": ("test.jpg", io.BytesIO(file_bytes), "image/jpeg")},
-            data={"metadata": json.dumps(metadata)}
+            data={"metadata": json.dumps(metadata)},
+            headers=headers,
         )
 
     # 3) assert
@@ -47,11 +52,15 @@ async def test_upload_bad_metadata(app: FastAPI):
     app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
     # no monkeypatch: let model_validate_json blow up
+    token = jwt_helper.create_access_token(sub=1)
+    headers = {"Authorization": f"Bearer {token}"}
+
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/upload/",
             files={"file": ("test.jpg", io.BytesIO(b"x"), "image/jpeg")},
-            data={"metadata": "not-a-json"}
+            data={"metadata": "not-a-json"},
+            headers=headers,
         )
     # your code does `raise HTTPException()` on parse error,
     # so we expect a 400
@@ -71,12 +80,15 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 
     monkeypatch.setattr(upload_service, "upload_image", broken_upload)
 
-    metadata = {"user_id": 1, "chapter": 1, "line_start": 1, "line_end": 1, "script_id": 1}
+    metadata = {"chapter": 1, "line_start": 1, "line_end": 1, "script_id": 1}
+    token = jwt_helper.create_access_token(sub=1)
+    headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/api/upload/",
             files={"file": ("foo.png", io.BytesIO(b"png"), "image/png")},
-            data={"metadata": json.dumps(metadata)}
+            data={"metadata": json.dumps(metadata)},
+            headers=headers,
         )
 
     assert response.status_code == 502
@@ -86,6 +98,9 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 
 @pytest.mark.asyncio
 async def test_get_user_uploads(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
     fake_req = [
         {
@@ -121,32 +136,45 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
         },
     ]
 
-    async def fake_get_user_uploads(user_id):
+    async def fake_get_user_uploads(db, user_id):
         return fake_req
 
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
+    token = jwt_helper.create_access_token(sub=42)
+    headers = {"Authorization": f"Bearer {token}"}
+
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        resp = await ac.get("/api/uploads/42")
+        resp = await ac.get("/api/uploads/", headers=headers)
 
     assert resp.status_code == 200
     assert resp.json() == fake_resp
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
 async def test_get_user_uploads_empty(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
 
-    async def fake_get_user_uploads(user_id):
+    async def fake_get_user_uploads(db, user_id):
         return []
 
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
+    token = jwt_helper.create_access_token(sub=42)
+    headers = {"Authorization": f"Bearer {token}"}
+
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        resp = await ac.get("/api/uploads/42")
+        resp = await ac.get("/api/uploads/", headers=headers)
 
     data = resp.json()
     assert resp.status_code == 200
     assert data == []
     assert isinstance(data, list)
+    app.dependency_overrides.clear()
+
+
 
