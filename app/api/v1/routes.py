@@ -39,8 +39,6 @@ async def upload_image(
     except Exception:
         logger.exception("Invalid upload metadata")
         raise HTTPException(status_code=400, detail="Invalid upload metadata")
-    if meta_obj.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
     upload_resp = await upload_service.upload_image(
         db,
         file,
@@ -53,14 +51,11 @@ async def upload_image(
     return upload_resp
 
 
-@router.get("/uploads/{user_id}", response_model=list[ImageUploadRecord])
+@router.get("/uploads/", response_model=list[ImageUploadRecord])
 async def get_user_uploads(
-    user_id: int,
     db=Depends(get_db_session),
-    auth_user_id: int = Depends(auth_dependency),
+    user_id: int = Depends(auth_dependency),
 ):
-    if user_id != auth_user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
     return await upload_service.get_user_uploads(db, user_id)
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=201)
