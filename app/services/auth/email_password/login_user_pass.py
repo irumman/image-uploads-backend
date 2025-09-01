@@ -38,17 +38,10 @@ class LoginUserPass:
     async def login_with_password(self, request: Request) -> LoginEmailResponse:
         user: AppUser = await self._user_password_validate()
 
-        # 2) Access token (short-lived)
-        access_token = jwt_helper.create_access_token(
-            sub=user.id,
-            secret=jwt_helper.access_secret_key if hasattr(jwt_helper, "access_secret_key") else jwt_helper.secret_key,
-            expires_minutes=settings.session_ttl_minutes,
-        )
-
-        # 3) Refresh token (opaque) + persist session (hash only)
+        # 1) Refresh token (opaque) + persist session (hash only)
         refresh_raw = jwt_helper.make_refresh_token()
         session_crud = AuthSessionCRUD()
-        await session_crud.create(
+        session = await session_crud.create(
             self.db,
             user_id=user.id,
             refresh_token_raw=refresh_raw,
@@ -56,6 +49,17 @@ class LoginUserPass:
             user_agent=request.headers.get("user-agent"),
             device_name=None,
             days=self.refresh_days,
+        )
+
+        # 2) Access token (short-lived) including session id
+        access_token = jwt_helper.create_access_token(
+            sub=user.id,
+            secret=
+                jwt_helper.access_secret_key
+                if hasattr(jwt_helper, "access_secret_key")
+                else jwt_helper.secret_key,
+            expires_minutes=settings.session_ttl_minutes,
+            extra_claims={"session_id": str(session.id)},
         )
 
         return LoginEmailResponse(
