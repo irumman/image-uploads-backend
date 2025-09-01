@@ -2,7 +2,6 @@ from pydantic import BaseModel, field_serializer
 from app.configs.constants import ProcessingStatus
 
 class ImageUploadInputRequest(BaseModel):
-    user_id: int
     chapter: int
     line_start: int
     line_end: int

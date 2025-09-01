@@ -13,15 +13,17 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 
 - **Endpoint:** `POST /api/upload/`
 - **Description:** Upload a new image for a user.
+- **Headers:** `Authorization: Bearer <access_token>`
 - **Request:** `multipart/form-data` with fields:
   - `file`: image file to upload.
-  - `metadata`: JSON string with keys `user_id`, `chapter`, `line_start`, `line_end`, and `script_id`.
+  - `metadata`: JSON string with keys `chapter`, `line_start`, `line_end`, and `script_id`.
 - **Response:** `ImageUploadResponse` describing the stored image.
 
 ## List User Uploads
 
-- **Endpoint:** `GET /api/uploads/{user_id}`
-- **Description:** Retrieve image uploads for the specified user.
+- **Endpoint:** `GET /api/uploads/`
+- **Description:** Retrieve image uploads for the authenticated user.
+- **Headers:** `Authorization: Bearer <access_token>`
 - **Response:** List of `ImageUploadRecord` objects.
 
 ## Register User
@@ -45,7 +47,9 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 ## Logout
 
 - **Endpoint:** `POST /api/logout`
-- **Description:** Invalidate a user's refresh token and end their session.
+- **Description:** Invalidate the authenticated user's refresh token and end their session. The user ID is taken from the Bearer token.
+- **Headers:** `Authorization: Bearer <access_token>`
+- **Request:** JSON object with `refresh_token`.
 - **Response:** `LogoutResponse` confirming logout.
 
 ## Root
