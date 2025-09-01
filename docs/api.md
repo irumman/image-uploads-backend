@@ -23,6 +23,8 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 
 - **Endpoint:** `GET /api/uploads/{user_id}`
 - **Description:** Retrieve image uploads for the specified user.
+- **Headers:** `Authorization: Bearer <access_token>`
+- **Note:** The `{user_id}` path parameter must match the authenticated user's ID from the token.
 - **Response:** List of `ImageUploadRecord` objects.
 
 ## Register User

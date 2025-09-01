@@ -119,6 +119,9 @@ async def test_upload_user_mismatch(app: FastAPI):
 
 @pytest.mark.asyncio
 async def test_get_user_uploads(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
     fake_req = [
         {
@@ -154,32 +157,65 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
         },
     ]
 
-    async def fake_get_user_uploads(user_id):
+    async def fake_get_user_uploads(db, user_id):
         return fake_req
 
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
+    token = jwt_helper.create_access_token(sub=42)
+    headers = {"Authorization": f"Bearer {token}"}
+
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        resp = await ac.get("/api/uploads/42")
+        resp = await ac.get("/api/uploads/42", headers=headers)
 
     assert resp.status_code == 200
     assert resp.json() == fake_resp
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
 async def test_get_user_uploads_empty(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
     transport = ASGITransport(app=app)
 
-    async def fake_get_user_uploads(user_id):
+    async def fake_get_user_uploads(db, user_id):
         return []
 
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
+    token = jwt_helper.create_access_token(sub=42)
+    headers = {"Authorization": f"Bearer {token}"}
+
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        resp = await ac.get("/api/uploads/42")
+        resp = await ac.get("/api/uploads/42", headers=headers)
 
     data = resp.json()
     assert resp.status_code == 200
     assert data == []
     assert isinstance(data, list)
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_get_user_uploads_user_mismatch(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
+    transport = ASGITransport(app=app)
+
+    async def fake_get_user_uploads(db, user_id):
+        return []
+
+    monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
+
+    token = jwt_helper.create_access_token(sub=1)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/uploads/2", headers=headers)
+
+    assert resp.status_code == 403
+    app.dependency_overrides.clear()
 

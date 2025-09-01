@@ -54,8 +54,14 @@ async def upload_image(
 
 
 @router.get("/uploads/{user_id}", response_model=list[ImageUploadRecord])
-async def get_user_uploads(user_id: int):
-    return await upload_service.get_user_uploads(user_id)
+async def get_user_uploads(
+    user_id: int,
+    db=Depends(get_db_session),
+    auth_user_id: int = Depends(auth_dependency),
+):
+    if user_id != auth_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return await upload_service.get_user_uploads(db, user_id)
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=201)
 async def register(user_in: EmailRegistrationInput, db=Depends(get_db_session)):

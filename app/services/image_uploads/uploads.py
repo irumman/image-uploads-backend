@@ -3,8 +3,6 @@ from fastapi import UploadFile, HTTPException
 from app.core.logger import logger
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.pg_engine import sessionmanager
 from app.db.crud.image_uploads import ImageUploadCRUD
 from app.services.image_uploads.schemas import ImageUploadResponse, ImageUploadRecord
 from app.services.storage.do_space import do_space
@@ -51,15 +49,14 @@ class UploadService:
             logger.exception("Failed to upload image")
             raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
-    async def get_user_uploads(self, user_id: int) -> list[ImageUploadRecord]:
+    async def get_user_uploads(self, db: AsyncSession, user_id: int) -> list[ImageUploadRecord]:
         """Return all uploads for a specific user.
 
         The mobile client expects a successful request to return JSON even when
         no uploads exist.  Instead of raising ``HTTPException`` on an empty
         result set, simply return an empty list so the response body is ``[]``.
         """
-        async with sessionmanager.session() as session:
-            rows = await self.crud.get_by_user(session, user_id)
+        rows = await self.crud.get_by_user(db, user_id)
 
         if not rows:
             return []
