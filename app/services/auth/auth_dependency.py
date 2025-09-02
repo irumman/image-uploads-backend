@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 import uuid
+import json
 from typing import Any
 
 from app.core.jwt_helper import jwt_helper
@@ -20,10 +21,11 @@ async def auth_dependency(
         payload = jwt.decode(
             token, jwt_helper.access_secret_key, algorithms=[jwt_helper.algorithm]
         )
-        sub_payload = payload.get("sub") or {}
+        sub_raw = payload.get("sub") or "{}"
+        sub_payload = json.loads(sub_raw)
         user_id = int(sub_payload.get("user_id"))
         session_id = uuid.UUID(sub_payload.get("session_id"))
-    except (JWTError, TypeError, ValueError, AttributeError):
+    except (JWTError, TypeError, ValueError, AttributeError, json.JSONDecodeError):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     session = await AuthSessionCRUD().get_active_by_id(db, session_id=session_id)

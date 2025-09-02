@@ -2,6 +2,7 @@ import os
 import secrets
 import hashlib
 import hmac
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -67,7 +68,11 @@ class JwtHelper:
         - `extra_claims` lets you add roles, scopes, etc.
         """
         now = datetime.now(timezone.utc)
-        payload_sub = sub if not isinstance(sub, (str, int)) else str(sub)
+        # `sub` must be a string per JWT spec. Allow dicts by JSON-encoding them.
+        if isinstance(sub, (dict, list)):
+            payload_sub = json.dumps(sub)
+        else:
+            payload_sub = str(sub)
         payload: dict[str, Any] = {
             "sub": payload_sub,
             "iat": int(now.timestamp()),
