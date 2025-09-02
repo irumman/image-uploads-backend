@@ -19,11 +19,17 @@ class LoginEmailInput(BaseModel):
     email: EmailStr
     password: str
 
+class UserInfo(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
+
 class LoginEmailResponse(BaseModel):
+    user: UserInfo
     access_token: str
     token_type: str = "Bearer"
     message: str
-    user_id: int
     refresh_token: str | None = None
 
 
