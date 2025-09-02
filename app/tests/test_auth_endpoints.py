@@ -58,6 +58,8 @@ async def test_login_success(monkeypatch, app: FastAPI):
     async def fake_login(self, request):
         return LoginEmailResponse(
             user_id=1,
+            user_name="Test User",
+            user_email="user@example.com",
             access_token="token123",
             refresh_token="refresh123",
             message="Login successful",
@@ -74,6 +76,8 @@ async def test_login_success(monkeypatch, app: FastAPI):
     assert response.status_code == 200
     assert response.json() == {
         "user_id": 1,
+        "user_name": "Test User",
+        "user_email": "user@example.com",
         "access_token": "token123",
         "token_type": "Bearer",
         "refresh_token": "refresh123",

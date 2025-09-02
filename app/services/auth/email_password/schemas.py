@@ -24,6 +24,8 @@ class LoginEmailResponse(BaseModel):
     token_type: str = "Bearer"
     message: str
     user_id: int
+    user_name: str
+    user_email: EmailStr
     refresh_token: str | None = None
 
 

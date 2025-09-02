@@ -42,7 +42,8 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 
 - **Endpoint:** `POST /api/login`
 - **Description:** Authenticate a user by email and password.
-- **Response:** `LoginEmailResponse` containing access and refresh tokens.
+- **Response:** `LoginEmailResponse` containing access and refresh tokens along with the user's
+  id, name, and email.
 
 ## Logout
 

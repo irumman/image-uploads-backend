@@ -51,19 +51,21 @@ class LoginUserPass:
             days=self.refresh_days,
         )
 
-        # 2) Access token (short-lived) including session id
+        # 2) Access token (short-lived) with session and user identifiers in the `sub` claim
+        sub_payload = {"user_id": user.id, "session_id": str(session.id)}
         access_token = jwt_helper.create_access_token(
-            sub=user.id,
+            sub=sub_payload,
             secret=
                 jwt_helper.access_secret_key
                 if hasattr(jwt_helper, "access_secret_key")
                 else jwt_helper.secret_key,
             expires_minutes=settings.session_ttl_minutes,
-            extra_claims={"session_id": str(session.id)},
         )
 
         return LoginEmailResponse(
             user_id=user.id,
+            user_name=user.name,
+            user_email=user.email,
             access_token=access_token,
             refresh_token=refresh_raw,
             message="Login successful",

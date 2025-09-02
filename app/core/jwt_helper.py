@@ -56,7 +56,7 @@ class JwtHelper:
     def create_access_token(
         self,
         *,
-        sub: str | int,
+        sub: str | int | dict[str, Any],
         secret: Optional[str] = None,
         expires_minutes: int = 60,
         extra_claims: Optional[dict[str, Any]] = None,
@@ -67,8 +67,9 @@ class JwtHelper:
         - `extra_claims` lets you add roles, scopes, etc.
         """
         now = datetime.now(timezone.utc)
+        payload_sub = sub if not isinstance(sub, (str, int)) else str(sub)
         payload: dict[str, Any] = {
-            "sub": str(sub),
+            "sub": payload_sub,
             "iat": int(now.timestamp()),
             "exp": int((now + timedelta(minutes=expires_minutes)).timestamp()),
         }
