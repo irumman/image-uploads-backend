@@ -125,7 +125,7 @@ async def test_logout_success(monkeypatch, app: FastAPI):
     monkeypatch.setattr(Logout, "logout", fake_logout)
     transport = ASGITransport(app=app)
     token = jwt_helper.create_access_token(
-        sub={"user_id": 1, "session_id": str(uuid.uuid4())}
+        sub=f"1:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -156,7 +156,7 @@ async def test_logout_invalid_session(monkeypatch, app: FastAPI):
     monkeypatch.setattr(Logout, "logout", fake_logout)
     transport = ASGITransport(app=app)
     token = jwt_helper.create_access_token(
-        sub={"user_id": 1, "session_id": str(uuid.uuid4())}
+        sub=f"1:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

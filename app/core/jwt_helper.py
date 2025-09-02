@@ -2,7 +2,6 @@ import os
 import secrets
 import hashlib
 import hmac
-import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -57,7 +56,7 @@ class JwtHelper:
     def create_access_token(
         self,
         *,
-        sub: str | int | dict[str, Any],
+        sub: str | int,
         secret: Optional[str] = None,
         expires_minutes: int = 60,
         extra_claims: Optional[dict[str, Any]] = None,
@@ -68,13 +67,8 @@ class JwtHelper:
         - `extra_claims` lets you add roles, scopes, etc.
         """
         now = datetime.now(timezone.utc)
-        # `sub` must be a string per JWT spec. Allow dicts by JSON-encoding them.
-        if isinstance(sub, (dict, list)):
-            payload_sub = json.dumps(sub)
-        else:
-            payload_sub = str(sub)
         payload: dict[str, Any] = {
-            "sub": payload_sub,
+            "sub": str(sub),
             "iat": int(now.timestamp()),
             "exp": int((now + timedelta(minutes=expires_minutes)).timestamp()),
         }

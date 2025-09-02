@@ -35,7 +35,7 @@ async def test_upload_success(monkeypatch, app: FastAPI):
     metadata = {"chapter": 1, "line_start": 2, "line_end": 3, "script_id": 1}
 
     token = jwt_helper.create_access_token(
-        sub={"user_id": 42, "session_id": str(uuid.uuid4())}
+        sub=f"42:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -65,7 +65,7 @@ async def test_upload_bad_metadata(app: FastAPI):
     transport = ASGITransport(app=app)
     # no monkeypatch: let model_validate_json blow up
     token = jwt_helper.create_access_token(
-        sub={"user_id": 1, "session_id": str(uuid.uuid4())}
+        sub=f"1:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -100,7 +100,7 @@ async def test_upload_service_failure(monkeypatch, app: FastAPI):
 
     metadata = {"chapter": 1, "line_start": 1, "line_end": 1, "script_id": 1}
     token = jwt_helper.create_access_token(
-        sub={"user_id": 1, "session_id": str(uuid.uuid4())}
+        sub=f"1:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -166,7 +166,7 @@ async def test_get_user_uploads(monkeypatch, app: FastAPI):
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
     token = jwt_helper.create_access_token(
-        sub={"user_id": 42, "session_id": str(uuid.uuid4())}
+        sub=f"42:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -195,7 +195,7 @@ async def test_get_user_uploads_empty(monkeypatch, app: FastAPI):
     monkeypatch.setattr(upload_service, "get_user_uploads", fake_get_user_uploads)
 
     token = jwt_helper.create_access_token(
-        sub={"user_id": 42, "session_id": str(uuid.uuid4())}
+        sub=f"42:{uuid.uuid4()}"
     )
     headers = {"Authorization": f"Bearer {token}"}
 

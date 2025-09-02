@@ -11,7 +11,7 @@ from app.db.crud.auth_sessions import AuthSessionCRUD
 @pytest.mark.asyncio
 async def test_auth_dependency_invalid_session(monkeypatch):
     token = jwt_helper.create_access_token(
-        sub={"user_id": 1, "session_id": str(uuid.uuid4())}
+        sub=f"1:{uuid.uuid4()}"
     )
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
@@ -29,7 +29,7 @@ async def test_auth_dependency_invalid_session(monkeypatch):
 async def test_auth_dependency_valid_session(monkeypatch):
     session_uuid = uuid.uuid4()
     token = jwt_helper.create_access_token(
-        sub={"user_id": 1, "session_id": str(session_uuid)}
+        sub=f"1:{session_uuid}"
     )
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
