@@ -30,7 +30,7 @@ Use these pages to explore endpoints, schemas, and try requests directly from th
 
 - **Endpoint:** `POST /api/register`
 - **Description:** Create a new user account with email and password credentials.
-- **Response:** `EmailRegistrationResponse` and status code `201`.
+- **Response:** `EmailRegistrationResponse` and status code `200`.
 
 ## Verify Email
 
