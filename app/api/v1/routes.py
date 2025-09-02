@@ -58,7 +58,7 @@ async def get_user_uploads(
 ):
     return await upload_service.get_user_uploads(db, user_id)
 
-@router.post("/register", response_model=EmailRegistrationResponse, status_code=201)
+@router.post("/register", response_model=EmailRegistrationResponse, status_code=200)
 async def register(user_in: EmailRegistrationInput, db=Depends(get_db_session)):
     response: EmailRegistrationResponse = await email_registration.register(
         db, user_data=user_in

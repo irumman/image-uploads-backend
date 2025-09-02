@@ -4,10 +4,49 @@ from httpx import ASGITransport, AsyncClient
 
 from app.services.auth.email_password.login_user_pass import LoginUserPass
 from app.services.auth.email_password.logout import Logout
-from app.services.auth.email_password.schemas import LoginEmailResponse, LogoutResponse
+from app.services.auth.email_password.schemas import (
+    EmailRegistrationResponse,
+    LoginEmailResponse,
+    LogoutResponse,
+)
+from app.services.auth.email_password.email_registration import email_registration
 from app.db.pg_engine import get_db_session
 from app.core.jwt_helper import jwt_helper
 from app.api.auth import auth_dependency
+
+
+@pytest.mark.asyncio
+async def test_register_success(monkeypatch, app: FastAPI):
+    async def override_get_db_session():
+        yield None
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
+    async def fake_register(db, user_data):
+        return EmailRegistrationResponse(
+            name=user_data.name,
+            email=user_data.email,
+            message="User registered successfully.",
+        )
+
+    monkeypatch.setattr(email_registration, "register", fake_register)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(
+            "/api/register",
+            json={
+                "name": "Test User",
+                "email": "user@example.com",
+                "password": "secret",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "name": "Test User",
+        "email": "user@example.com",
+        "message": "User registered successfully.",
+    }
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
