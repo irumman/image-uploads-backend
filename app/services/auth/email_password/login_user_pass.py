@@ -63,9 +63,7 @@ class LoginUserPass:
         )
 
         return LoginEmailResponse(
-            user_id=user.id,
-            user_name=user.name,
-            user_email=user.email,
+            user={"id": user.id, "name": user.name, "email": user.email},
             access_token=access_token,
             refresh_token=refresh_raw,
             message="Login successful",

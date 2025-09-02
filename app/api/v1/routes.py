@@ -2,7 +2,7 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Query, Dep
 from app.core.logger import logger
 
 from app.db.pg_engine import get_db_session
-from app.api.auth import auth_dependency
+from app.services.auth.auth_dependency import auth_dependency
 from app.services.image_uploads.schemas import (
     ImageUploadResponse,
     ImageUploadInputRequest,
@@ -32,7 +32,7 @@ async def upload_image(
     file: UploadFile = File(...),
     metadata: str = Form(...),
     db=Depends(get_db_session),
-    user_id: int = Depends(auth_dependency),
+    auth=Depends(auth_dependency),
 ):
     try:
         meta_obj = ImageUploadInputRequest.model_validate_json(metadata)
@@ -42,7 +42,7 @@ async def upload_image(
     upload_resp = await upload_service.upload_image(
         db,
         file,
-        user_id=user_id,
+        user_id=auth["user_id"],
         chapter=meta_obj.chapter,
         line_start=meta_obj.line_start,
         line_end=meta_obj.line_end,
@@ -54,9 +54,9 @@ async def upload_image(
 @router.get("/uploads/", response_model=list[ImageUploadRecord])
 async def get_user_uploads(
     db=Depends(get_db_session),
-    user_id: int = Depends(auth_dependency),
+    auth=Depends(auth_dependency),
 ):
-    return await upload_service.get_user_uploads(db, user_id)
+    return await upload_service.get_user_uploads(db, auth["user_id"])
 
 @router.post("/register", response_model=EmailRegistrationResponse, status_code=200)
 async def register(user_in: EmailRegistrationInput, db=Depends(get_db_session)):
@@ -85,9 +85,9 @@ async def login(body: LoginEmailInput, request: Request, db=Depends(get_db_sessi
 async def logout(
     body: LogoutInput,
     db=Depends(get_db_session),
-    user_id: int = Depends(auth_dependency),
+    auth=Depends(auth_dependency),
 ):
-    service = Logout(db, user_id, body.refresh_token)
+    service = Logout(db, auth["user_id"], body.refresh_token)
     return await service.logout()
 
 
