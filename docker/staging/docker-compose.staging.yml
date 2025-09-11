@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    container_name: fastapi_app_staging
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}
+    ports:
+      - "8001:8000"   # staging exposed on different port
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    container_name: postgres_db_staging
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_data_staging:
