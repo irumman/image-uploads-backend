@@ -213,14 +213,14 @@ COPY public.quranic_scripts (id, script_name) FROM stdin;
 -- Name: app_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.app_users_id_seq', 67, true);
+SELECT pg_catalog.setval('public.app_users_id_seq', 1, true);
 
 
 --
 -- Name: image_upload_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.image_upload_id_seq', 22, true);
+SELECT pg_catalog.setval('public.image_upload_id_seq', 1, true);
 
 
 --

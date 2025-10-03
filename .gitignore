@@ -58,5 +58,6 @@ Thumbs.db
 *.zip
 
 tmp
+tmp/*
 images
 .env
